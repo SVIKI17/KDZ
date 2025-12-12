@@ -1,0 +1,1031 @@
+<!-- views/index.ejs -->
+<div class="hero">
+    <h1>Добро пожаловать в КДЗ!</h1>
+    <p class="subtitle">Эффективное приложение для запоминания информации с помощью карточек</p>
+    
+    <% if (!user) { %>
+        <div class="hero-buttons">
+            <a href="/register" class="btn btn-primary btn-large">
+                <i class="fas fa-user-plus"></i> Начать бесплатно
+            </a>
+            <a href="/login" class="btn btn-primary btn-large">
+                <i class="fas fa-sign-in-alt"></i> Войти в аккаунт
+            </a>
+        </div>
+    <% } else { %>
+        <div class="hero-buttons">
+            <a href="/dashboard" class="btn btn-primary btn-large">
+                <i class="fas fa-book"></i> К моим колодам
+            </a>
+            <a href="/decks/create" class="btn btn-outline btn-large">
+                <i class="fas fa-plus"></i> Создать колоду
+            </a>
+        </div>
+    <% } %>
+</div>
+
+<div class="section-divider"></div>
+
+<div class="features">
+    <h2>Почему выбирают КДЗ?</h2>
+    <div class="row">
+        <div class="card">
+            <i class="fas fa-bolt feature-icon"></i>
+            <h3>Скоростной вызов</h3>
+            <p>Тренируйтесь с таймером для улучшения скорости запоминания</p>
+        </div>
+        
+        <div class="card">
+            <i class="fas fa-chart-line feature-icon"></i>
+            <h3>Подробная статистика</h3>
+            <p>Отслеживайте прогресс и выявляйте слабые места</p>
+        </div>
+        
+        <div class="card">
+            <i class="fas fa-users feature-icon"></i>
+            <h3>Публичная библиотека</h3>
+            <p>Изучайте готовые колоды от других пользователей</p>
+        </div>
+    </div>
+</div>
+
+<% if (stats && stats.publicDecks && stats.publicDecks.length > 0) { %>
+<div class="section-divider"></div>
+
+<div class="popular-decks">
+    <h2>Популярные колоды</h2>
+    <div class="row">
+        <% stats.publicDecks.forEach(deck => { %>
+            <div class="card deck-card">
+                <h3><%= deck.name %></h3>
+                <p><%= deck.description || 'Без описания' %></p>
+                <div class="deck-meta">
+                    <span class="deck-author">
+                        <i class="fas fa-user"></i> <%= deck.User.username %>
+                    </span>
+                    <a href="/decks/<%= deck.id %>" class="btn btn-primary btn-small">
+                        Изучать
+                    </a>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+</div>
+<% } %>
+
+<div class="section-divider"></div>
+
+<div class="categories">
+    <h2>Популярные категории</h2>
+    <div class="category-tags">
+        <a href="/library?search=биология" class="category-tag">Биология</a>
+        <a href="/library?search=химия" class="category-tag">Химия</a>
+        <a href="/library?search=математика" class="category-tag">Математика</a>
+        <a href="/library?search=история" class="category-tag">История</a>
+        <a href="/library?search=английский" class="category-tag">Английский язык</a>
+        <a href="/library?search=программирование" class="category-tag">Программирование</a>
+        <a href="/library?search=медицина" class="category-tag">Медицина</a>
+        <a href="/library?search=искусство" class="category-tag">Искусство</a>
+    </div>
+</div>
+
+<div class="section-divider"></div>
+
+<div class="site-stats">
+    <h2>Статистика платформы</h2>
+    <div class="stats-grid">
+        <div class="stat-item">
+            <i class="fas fa-users stat-icon"></i>
+            <div class="stat-info">
+                <h3 id="usersCount">0</h3>
+                <p>Пользователей</p>
+            </div>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-book stat-icon"></i>
+            <div class="stat-info">
+                <h3 id="decksCount">0</h3>
+                <p>Колод</p>
+            </div>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-cards stat-icon"></i>
+            <div class="stat-info">
+                <h3 id="cardsCount">0</h3>
+                <p>Карточек</p>
+            </div>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-graduation-cap stat-icon"></i>
+            <div class="stat-info">
+                <h3 id="sessionsCount">0</h3>
+                <p>Сессий обучения</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-divider"></div>
+
+<div class="faq-section">
+    <h2>Часто задаваемые вопросы</h2>
+    <div class="faq-container">
+        <div class="faq-item">
+            <div class="faq-question">
+                Как создать свою первую колоду?
+            </div>
+            <div class="faq-answer">
+                Просто войдите в свой аккаунт, нажмите "Создать колоду" и добавьте карточки с вопросами и ответами.
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">
+                Можно ли изучать колоды других пользователей?
+            </div>
+            <div class="faq-answer">
+                Да! В публичной библиотеке вы найдете множество колод по разным темам, созданных другими пользователями.
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">
+                Что такое скоростной вызов?
+            </div>
+            <div class="faq-answer">
+                Это режим обучения с таймером, который помогает улучшить скорость запоминания информации.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section">
+    <h2>Начните обучение прямо сейчас!</h2>
+    <p>Присоединяйтесь к тысячам пользователей, которые уже улучшают свои знания с помощью КДЗ</p>
+    <% if (!user) { %>
+        <a href="/register" class="btn btn-primary btn-large">
+            <i class="fas fa-rocket"></i> Присоединиться бесплатно
+        </a>
+    <% } else { %>
+        <a href="/library" class="btn btn-primary btn-large">
+            <i class="fas fa-book-open"></i> Изучать библиотеку
+        </a>
+    <% } %>
+</div>
+
+<style>
+.hero {
+    text-align: center;
+    padding: 80px 30px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border-radius: 20px;
+    margin: 40px 0 60px;
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 40c24.85 0 45-20.15 45-45S44.85-50 20-50-25-29.85-25-5s20.15 45 45 45zm130 65c24.85 0 45-20.15 45-45S174.85-15 150-15s-45 20.15-45 45 20.15 45 45 45zM-10 165c24.85 0 45-20.15 45-45S14.85 75-10 75s-45 20.15-45 45 20.15 45 45 45z' fill='%2364b5f6' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+    opacity: 0.3;
+}
+
+.hero h1 {
+    font-size: 3.2rem;
+    margin-bottom: 25px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    position: relative;
+    z-index: 1;
+}
+
+.hero .subtitle {
+    font-size: 1.4rem;
+    margin-bottom: 40px;
+    opacity: 0.95;
+    max-width: 650px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+    font-weight: 300;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.hero .btn-primary {
+    background: white;
+    color: #1976D2;
+    padding: 18px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.hero .btn-primary:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    background: #f8fbff;
+}
+
+.hero .btn-outline {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    padding: 18px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.hero .btn-outline:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: white;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.features {
+    margin: 80px 0;
+}
+
+.features h2 {
+    text-align: center;
+    margin-bottom: 60px;
+    color: #2c3e50;
+    font-size: 2.6rem;
+    font-weight: 700;
+    position: relative;
+}
+
+.features h2::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.features .row {
+    gap: 30px;
+}
+
+.features .card {
+    text-align: center;
+    padding: 40px 30px;
+    border-radius: 16px;
+    border: 2px solid #e3f2fd;
+    background: white;
+    transition: all 0.4s ease;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.features .card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(33, 150, 243, 0.15);
+    border-color: #64b5f6;
+}
+
+.feature-icon {
+    font-size: 60px;
+    color: #2196F3;
+    margin-bottom: 25px;
+    display: inline-block;
+}
+
+.features .card h3 {
+    color: #2c3e50;
+    margin: 20px 0 15px;
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.features .card p {
+    color: #546e7a;
+    line-height: 1.6;
+    font-size: 1.05rem;
+}
+
+.popular-decks {
+    margin: 80px 0;
+    padding: 60px 40px;
+    background: #f8fbff;
+    border-radius: 20px;
+    border: 2px solid #e3f2fd;
+}
+
+.popular-decks h2 {
+    text-align: center;
+    margin-bottom: 50px;
+    color: #2c3e50;
+    font-size: 2.6rem;
+    font-weight: 700;
+    position: relative;
+}
+
+.popular-decks h2::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.popular-decks .row {
+    gap: 30px;
+}
+
+.popular-decks .deck-card {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    border: 2px solid #bbdefb;
+    transition: all 0.4s ease;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.popular-decks .deck-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.15);
+    border-color: #64b5f6;
+}
+
+.popular-decks .deck-card h3 {
+    color: #1976D2;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    min-height: 70px;
+}
+
+.popular-decks .deck-card p {
+    color: #546e7a;
+    margin-bottom: 25px;
+    line-height: 1.6;
+    min-height: 100px;
+}
+
+.deck-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e3f2fd;
+}
+
+.deck-author {
+    color: #607d8b;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.popular-decks .btn-small {
+    background: #2196F3;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.popular-decks .btn-small:hover {
+    background: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(33, 150, 243, 0.3);
+}
+
+.categories {
+    margin: 80px 0;
+    text-align: center;
+}
+
+.categories h2 {
+    margin-bottom: 40px;
+    color: #2c3e50;
+    font-size: 2.6rem;
+    font-weight: 700;
+    position: relative;
+}
+
+.categories h2::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.category-tags {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.category-tag {
+    padding: 14px 28px;
+    background: #e3f2fd;
+    color: #1976D2;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    font-size: 15px;
+}
+
+.category-tag:hover {
+    background: #1976D2;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(25, 118, 210, 0.2);
+    border-color: #1976D2;
+}
+
+.site-stats {
+    margin: 80px 0;
+    padding: 60px 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+}
+
+.site-stats h2 {
+    text-align: center;
+    margin-bottom: 60px;
+    color: #2c3e50;
+    font-size: 2.6rem;
+    font-weight: 700;
+    position: relative;
+}
+
+.site-stats h2::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 30px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 40px 30px;
+    background: #f8fbff;
+    border-radius: 16px;
+    border: 2px solid #e3f2fd;
+    transition: all 0.4s ease;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.stat-item:hover {
+    transform: translateY(-8px);
+    background: white;
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.15);
+    border-color: #bbdefb;
+}
+
+.stat-icon {
+    font-size: 56px;
+    color: #2196F3;
+    margin-bottom: 25px;
+    display: block;
+}
+
+.stat-info h3 {
+    font-size: 3rem;
+    color: #1976D2;
+    margin-bottom: 15px;
+    font-weight: 800;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.stat-info p {
+    color: #546e7a;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cta-section {
+    margin: 80px 0 40px;
+    padding: 80px 40px;
+    background: linear-gradient(135deg, #64b5f6 0%, #2196F3 100%);
+    color: white;
+    border-radius: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 40c24.85 0 45-20.15 45-45S44.85-50 20-50-25-29.85-25-5s20.15 45 45 45zm130 65c24.85 0 45-20.15 45-45S174.85-15 150-15s-45 20.15-45 45 20.15 45 45 45zM-10 165c24.85 0 45-20.15 45-45S14.85 75-10 75s-45 20.15-45 45 20.15 45 45 45z' fill='%2364b5f6' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+    opacity: 0.2;
+}
+
+.cta-section h2 {
+    font-size: 2.8rem;
+    margin-bottom: 25px;
+    font-weight: 800;
+    position: relative;
+    z-index: 1;
+}
+
+.cta-section p {
+    font-size: 1.3rem;
+    margin-bottom: 40px;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
+    opacity: 0.95;
+    position: relative;
+    z-index: 1;
+    line-height: 1.6;
+}
+
+.cta-section .btn-primary {
+    background: white;
+    color: #1976D2;
+    padding: 20px 50px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 50px;
+    border: 2px solid white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.cta-section .btn-primary:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    background: #f8fbff;
+}
+
+.faq-section {
+    margin: 80px 0;
+    padding: 60px 40px;
+    background: #f8fbff;
+    border-radius: 20px;
+    border: 2px solid #e3f2fd;
+}
+
+.faq-section h2 {
+    text-align: center;
+    margin-bottom: 50px;
+    color: #2c3e50;
+    font-size: 2.6rem;
+    font-weight: 700;
+    position: relative;
+}
+
+.faq-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.faq-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    border: 2px solid #e3f2fd;
+    transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+    border-color: #bbdefb;
+}
+
+.faq-question {
+    padding: 25px 30px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1976D2;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.3s;
+}
+
+.faq-question:hover {
+    background: #f5f9ff;
+}
+
+.faq-answer {
+    padding: 0 30px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    color: #546e7a;
+    line-height: 1.6;
+}
+
+.faq-item.active .faq-answer {
+    padding: 0 30px 25px;
+    max-height: 200px;
+}
+
+.section-divider {
+    height: 3px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        #bbdefb 50%, 
+        transparent 100%);
+    margin: 60px auto;
+    width: 80%;
+    max-width: 400px;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.features .card:nth-child(1) { animation-delay: 0.1s; }
+.features .card:nth-child(2) { animation-delay: 0.2s; }
+.features .card:nth-child(3) { animation-delay: 0.3s; }
+
+.popular-decks .deck-card:nth-child(1) { animation-delay: 0.2s; }
+.popular-decks .deck-card:nth-child(2) { animation-delay: 0.3s; }
+.popular-decks .deck-card:nth-child(3) { animation-delay: 0.4s; }
+
+.stat-item:nth-child(1) { animation-delay: 0.1s; }
+.stat-item:nth-child(2) { animation-delay: 0.2s; }
+.stat-item:nth-child(3) { animation-delay: 0.3s; }
+.stat-item:nth-child(4) { animation-delay: 0.4s; }
+
+@media (max-width: 768px) {
+    .hero {
+        padding: 60px 20px;
+        margin: 20px 0 40px;
+    }
+    
+    .hero h1 {
+        font-size: 2.3rem;
+    }
+    
+    .hero .subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .hero .btn-primary,
+    .hero .btn-outline {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+        padding: 16px 30px;
+    }
+    
+    .features h2,
+    .popular-decks h2,
+    .categories h2,
+    .site-stats h2,
+    .cta-section h2,
+    .faq-section h2 {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .popular-decks,
+    .site-stats,
+    .cta-section,
+    .faq-section {
+        padding: 40px 20px;
+    }
+    
+    .category-tags {
+        gap: 10px;
+    }
+    
+    .category-tag {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    .stat-info h3 {
+        font-size: 2.5rem;
+    }
+}
+</style>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    loadPlatformStats();
+    
+    initCounterAnimations();
+    
+    initScrollAnimations();
+    
+    initFAQ();
+});
+
+// Загрузка статистики платформы 
+async function loadPlatformStats() {
+  console.log('loadPlatformStats вызвана');
+  
+  try {
+    console.log('Запрашиваю /api/stats...');
+    const response = await fetch('/api/stats');
+    console.log('Ответ получен, статус:', response.status);
+    
+    const data = await response.json();
+    console.log('Данные от API:', data);
+    
+    if (data.success) {
+      console.log('Обновляю счетчики:', {
+        users: data.usersCount,
+        decks: data.decksCount,
+        cards: data.cardsCount,
+        sessions: data.sessionsCount
+      });
+      
+      animateCounter('usersCount', data.usersCount || 0);
+      animateCounter('decksCount', data.decksCount || 0);
+      animateCounter('cardsCount', data.cardsCount || 0);
+      animateCounter('sessionsCount', data.sessionsCount || 0);
+      
+      console.log('Счетчики обновлены');
+    } else {
+      console.error('API вернул success: false', data);
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки статистики:', error);
+    
+    animateCounter('usersCount', 0);
+    animateCounter('decksCount', 0);
+    animateCounter('cardsCount', 0);
+    animateCounter('sessionsCount', 0);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM загружен, вызываю loadPlatformStats...');
+  loadPlatformStats();
+});
+
+function animateCounter(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const duration = 2000; 
+    const increment = targetValue / (duration / 16); 
+    let currentValue = 0;
+    
+    const timer = setInterval(() => {
+        currentValue += increment;
+        if (currentValue >= targetValue) {
+            clearInterval(timer);
+            element.textContent = targetValue;
+        } else {
+            element.textContent = Math.floor(currentValue);
+        }
+    }, 16);
+}
+
+function initCounterAnimations() {
+    const statItems = document.querySelectorAll('.stat-item');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const counter = entry.target.querySelector('.stat-info h3');
+                if (counter && !counter.classList.contains('animated')) {
+                    const target = parseInt(counter.textContent);
+                    if (!isNaN(target)) {
+                        counter.classList.add('animated');
+                        animateCounter(counter.id, target);
+                    }
+                }
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    statItems.forEach(item => observer.observe(item));
+}
+
+function initScrollAnimations() {
+    const animatedElements = document.querySelectorAll('.features .card, .popular-decks .deck-card, .stat-item');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (!entry.target.classList.contains('animated-visible')) {
+                    entry.target.classList.add('animated-visible');
+                }
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    animatedElements.forEach(element => {
+        observer.observe(element);
+    });
+}
+
+function initFAQ() {
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    
+    faqQuestions.forEach(question => {
+        question.addEventListener('click', function() {
+            const faqItem = this.parentElement;
+            const isActive = faqItem.classList.contains('active');
+            
+            
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+           
+            if (!isActive) {
+                faqItem.classList.add('active');
+            }
+        });
+    });
+}
+
+function showFeatureNotification() {
+    if (!localStorage.getItem('featureNotificationShown')) {
+        setTimeout(() => {
+            const notification = document.createElement('div');
+            notification.className = 'feature-notification';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-star"></i>
+                    <span>Новинка! Попробуйте режим скоростного вызова для быстрого обучения</span>
+                </div>
+                <button onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 5000);
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('featureNotificationShown', 'true');
+        }, 2000);
+    }
+}
+
+
+setTimeout(showFeatureNotification, 1000);
+</script>
+
+
+<style>
+.feature-notification {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    max-width: 350px;
+    z-index: 10000;
+    box-shadow: 0 10px 30px rgba(33, 150, 243, 0.3);
+    animation: slideInRight 0.5s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.feature-notification .notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.feature-notification i.fa-star {
+    color: #FFD700;
+    font-size: 20px;
+}
+
+.feature-notification button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.feature-notification button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>

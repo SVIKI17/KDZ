@@ -1,0 +1,714 @@
+<!-- views/decks/view.ejs-->
+<div class="deck-view-header">
+    <div class="deck-header-top">
+        <a href="/dashboard" class="btn btn-outline btn-small">
+            <i class="fas fa-arrow-left"></i> Вернуться в кабинет
+        </a>
+        
+        <div class="deck-info">
+            <h1><%= deck.name %></h1>
+            <% if (deck.User && deck.User.username) { %>
+                <p class="deck-author">Автор: <%= deck.User.username %></p>
+            <% } else if (deck.userId) { %>
+                <p class="deck-author">Автор: ID <%= deck.userId %></p>
+            <% } %>
+            <p class="deck-description"><%= deck.description || 'Без описания' %></p>
+        </div>
+        
+        <% if (user && (user.id === deck.userId || user.role === 'admin')) { %>
+            <div class="deck-owner-actions">
+                <% if (deck.status === 'draft' && deck.isPublic) { %>
+                    <form action="/decks/<%= deck.id %>/publish" method="POST">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Опубликовать
+                        </button>
+                    </form>
+                <% } %>
+                
+                <a href="/decks/<%= deck.id %>/edit" class="btn btn-outline">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<div class="deck-stats">
+    <div class="stat">
+        <span class="stat-value"><%= deck.Cards ? deck.Cards.length : 0 %></span>
+        <span class="stat-label">Карточек</span>
+    </div>
+    
+    <% if (deck.isPublic) { %>
+        <div class="stat">
+            <span class="stat-value">
+                <i class="fas fa-globe"></i>
+            </span>
+            <span class="stat-label">Публичная</span>
+        </div>
+    <% } else { %>
+        <div class="stat">
+            <span class="stat-value">
+                <i class="fas fa-lock"></i>
+            </span>
+            <span class="stat-label">Приватная</span>
+        </div>
+    <% } %>
+</div>
+
+<% if (!user || user.role !== 'admin') { %>
+<div class="study-options">
+    <h2>Начать обучение</h2>
+    <div class="study-buttons">
+        <% if (deck.Cards && deck.Cards.length > 0) { %>
+            <a href="/decks/<%= deck.id %>/study/swipe" class="btn btn-primary btn-large">
+                <i class="fas fa-play"></i> Обычный режим
+            </a>
+            <a href="/decks/<%= deck.id %>/study/speed" class="btn btn-primary btn-large">
+                <i class="fas fa-bolt"></i> Скоростной вызов
+            </a>
+            
+            <% if (user && user.id === deck.userId) { %>
+                <a href="/cards/create?deckId=<%= deck.id %>" class="btn btn-primary btn-large">
+                    <i class="fas fa-plus"></i> Добавить карточку
+                </a>
+            <% } else if (user && user.id !== deck.userId && deck.isPublic) { %>
+                <button class="btn btn-primary btn-large" onclick="importDeck(<%= deck.id %>)">
+                    <i class="fas fa-download"></i> Импортировать в мои колоды
+                </button>
+            <% } %>
+        <% } else { %>
+            
+            <div class="no-cards-info">
+                <p>Добавьте карточки, чтобы начать обучение</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+<% } %>
+
+<div class="cards-list">
+    <h2>Карточки в колоде (<%= deck.Cards ? deck.Cards.length : 0 %>)</h2>
+    
+    <% if (!deck.Cards || deck.Cards.length === 0) { %>
+        <div class="empty-state">
+            <i class="fas fa-inbox fa-2x"></i>
+            <p>В этой колоде пока нет карточек</p>
+            <% if (user && user.id === deck.userId) { %>
+                <a href="/cards/create?deckId=<%= deck.id %>" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Добавить карточку
+                </a>
+            <% } %>
+        </div>
+    <% } else { %>
+        <div class="cards-grid">
+            <% deck.Cards.forEach((card, index) => { %>
+                <div class="card-item">
+                    <div class="card-header">
+                        <span class="card-number">
+                            <a href="/cards/<%= card.id %>" style="color: inherit; text-decoration: none;">
+                                Карточка #<%= index + 1 %>
+                            </a>
+                        </span>
+                        
+                    </div>
+                    
+                    <div class="flashcard-preview" onclick="toggleCard(this)">
+                        <div class="flashcard-preview-front">
+                            <h3>Вопрос:</h3>
+                            <p class="card-content"><%= card.question %></p>
+                        </div>
+                        <div class="flashcard-preview-back">
+                            <h3>Ответ:</h3>
+                            <p class="card-content"><%= card.answer %></p>
+                        </div>
+                    </div>
+                    
+                    <% if (card.tags) { %>
+                        <div class="card-tags">
+                            <% card.tags.split(',').forEach(tag => { %>
+                                <span class="tag"><i class="fas fa-tag"></i> <%= tag.trim() %></span>
+                            <% }); %>
+                        </div>
+                    <% } %>
+                    
+                    <div class="card-hint">
+                        <small><i class="fas fa-hand-point-up"></i> Нажмите на карточку, чтобы увидеть ответ</small>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } %>
+</div>
+
+<script>
+function toggleCard(element) {
+    element.querySelector('.flashcard-preview').classList.toggle('flipped');
+}
+
+async function importDeck(deckId) {
+    if (confirm('Импортировать эту колоду в вашу библиотеку?')) {
+        try {
+            const response = await fetch(`/api/decks/${deckId}/import`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Колода успешно импортирована в вашу библиотеку!');
+                window.location.href = '/dashboard';
+            } else {
+                alert('Ошибка при импорте колоды: ' + (data.message || 'Неизвестная ошибка'));
+            }
+        } catch (error) {
+            console.error('Ошибка при импорте колоды:', error);
+            alert('Ошибка при импорте колоды. Пожалуйста, попробуйте позже.');
+        }
+    }
+}
+</script>
+
+<style>
+.deck-view-header {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.deck-view-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 40c24.85 0 45-20.15 45-45S44.85-50 20-50-25-29.85-25-5s20.15 45 45 45zm130 65c24.85 0 45-20.15 45-45S174.85-15 150-15s-45 20.15-45 45 20.15 45 45 45zM-10 165c24.85 0 45-20.15 45-45S14.85 75-10 75s-45 20.15-45 45 20.15 45 45 45z' fill='%2364b5f6' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+    opacity: 0.2;
+}
+
+.deck-header-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+}
+
+.deck-header-top .btn-small {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.deck-header-top .btn-small:hover {
+    background: white;
+    color: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.deck-info {
+    flex: 1;
+}
+
+.deck-info h1 {
+    color: white;
+    margin: 0 0 10px 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+.deck-author {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    margin: 0 0 15px 0;
+    font-weight: 500;
+}
+
+.deck-description {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    line-height: 1.6;
+    font-size: 1.1rem;
+}
+
+.deck-owner-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.deck-owner-actions .btn-primary {
+    background: white;
+    color: #1976D2;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.deck-owner-actions .btn-primary:hover {
+    background: #f8fbff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.deck-owner-actions .btn-outline {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.deck-owner-actions .btn-outline:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.deck-stats {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 40px;
+    padding: 25px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+}
+
+.stat {
+    text-align: center;
+    flex: 1;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1976D2;
+    margin-bottom: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.stat-label {
+    color: #546e7a;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.study-options {
+    text-align: center;
+    margin: 40px 0;
+    padding: 40px;
+    background: linear-gradient(135deg, #f8fbff 0%, #e3f2fd 100%);
+    border-radius: 16px;
+    border: 2px solid #bbdefb;
+}
+
+.study-options h2 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.study-options h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.study-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.btn-large {
+    padding: 18px 35px;
+    font-size: 18px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.study-buttons .btn-primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border: none;
+}
+
+.study-buttons .btn-primary:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.3);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+}
+
+.study-buttons .btn-outline {
+    background: white;
+    border: 2px solid #bbdefb;
+    color: #1976D2;
+}
+
+.study-buttons .btn-outline:hover {
+    background: #e3f2fd;
+    border-color: #2196F3;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.15);
+}
+
+/* Информационное сообщение, когда нет карточек */
+.no-cards-info {
+    color: #546e7a;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 15px 25px;
+    background: rgba(33, 150, 243, 0.1);
+    border-radius: 12px;
+    border: 2px dashed #bbdefb;
+}
+
+.cards-list {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+}
+
+.cards-list h2 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.cards-list h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.card-item {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+}
+
+.card-item:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.15);
+    border-color: #bbdefb;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e3f2fd;
+}
+
+.card-number {
+    font-weight: 700;
+    color: #1976D2;
+    font-size: 18px;
+}
+
+.card-number a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.card-number a:hover {
+    color: #2196F3;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit-card {
+    background: #e3f2fd;
+    color: #1976D2;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.btn-edit-card:hover {
+    background: #2196F3;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(33, 150, 243, 0.3);
+}
+
+.flashcard-preview {
+    cursor: pointer;
+    position: relative;
+    height: 200px;
+    perspective: 1000px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.flashcard-preview-front,
+.flashcard-preview-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+}
+
+.flashcard-preview-front {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border-color: #64b5f6;
+}
+
+.flashcard-preview-back {
+    background: linear-gradient(135deg, #64b5f6 0%, #2196F3 100%);
+    color: white;
+    border-color: #90caf9;
+    transform: rotateY(180deg);
+}
+
+.flashcard-preview.flipped .flashcard-preview-front {
+    transform: rotateY(180deg);
+}
+
+.flashcard-preview.flipped .flashcard-preview-back {
+    transform: rotateY(0);
+}
+
+.flashcard-preview-front h3,
+.flashcard-preview-back h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.card-content {
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    width: 100%;
+    word-break: break-word;
+}
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.tag {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #bbdefb;
+}
+
+.tag i {
+    font-size: 11px;
+}
+
+.card-hint {
+    text-align: center;
+    color: #546e7a;
+    font-size: 14px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px dashed #e3f2fd;
+}
+
+.card-hint i {
+    color: #2196F3;
+    margin-right: 5px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    color: #546e7a;
+    background: #f8fbff;
+    border-radius: 12px;
+    border: 2px dashed #bbdefb;
+}
+
+.empty-state i {
+    color: #bbdefb;
+    margin-bottom: 25px;
+    font-size: 48px;
+}
+
+.empty-state p {
+    margin-bottom: 25px;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.empty-state .btn-primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.empty-state .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(33, 150, 243, 0.3);
+}
+
+@media (max-width: 768px) {
+    .deck-view-header {
+        padding: 30px 20px;
+    }
+    
+    .deck-header-top {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .deck-info h1 {
+        font-size: 1.8rem;
+    }
+    
+    .deck-stats {
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+    }
+    
+    .study-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-large {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+    
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cards-list {
+        padding: 30px 20px;
+    }
+}
+</style>

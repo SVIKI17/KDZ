@@ -1,0 +1,1581 @@
+<!-- views/admin/dashboard.ejs -->
+<div class="admin-header">
+    <h1>Административная панель</h1>
+    <div class="admin-stats">
+        <div class="stat-card">
+            <h3><%= users.length %></h3>
+            <p>Пользователей</p>
+        </div>
+        <div class="stat-card">
+            <h3><%= pendingDecks.length %></h3>
+            <p>Колод на модерации</p>
+        </div>
+        <div class="stat-card">
+            <h3><%= publicDecksCount || 0 %></h3>
+            <p>Одобренных колод</p>
+        </div>
+    </div>
+    
+
+    <div class="admin-actions">
+        <a href="/library" class="btn btn-outline">
+            <i class="fas fa-book-open"></i> Библиотека
+        </a>
+        <a href="/logout" class="btn btn-logout">
+            <i class="fas fa-sign-out-alt"></i> Выход
+        </a>
+    </div>
+</div>
+
+<div class="admin-tabs">
+    <button class="tab-btn active" onclick="showTab('moderation')">Модерация</button>
+    <button class="tab-btn" onclick="showTab('users')">Пользователи</button>
+    <button class="tab-btn" onclick="showTab('stats')">Статистика</button>
+</div>
+
+<div class="tab-content" id="moderationTab">
+    <h2>Колоды на модерации</h2>
+    
+    <% if (pendingDecks.length === 0) { %>
+        <div class="empty-state">
+            <i class="fas fa-check-circle fa-3x"></i>
+            <p>Нет колод, ожидающих модерации</p>
+        </div>
+    <% } else { %>
+        <div class="moderation-list">
+            <% pendingDecks.forEach(deck => { %>
+                <div class="moderation-item card" id="deck-<%= deck.id %>">
+                    <div class="moderation-header">
+                        <h3><%= deck.name %></h3>
+                       
+                        <div class="moderation-actions">
+                            <button class="btn btn-primary btn-small" 
+                                    onclick="approveDeck(<%= deck.id %>)">
+                                <i class="fas fa-check"></i> Одобрить
+                            </button>
+                            <button class="btn btn-error btn-small" 
+                                    onclick="rejectDeck(<%= deck.id %>)">
+                                <i class="fas fa-times"></i> Отклонить
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <p class="deck-description"><%= deck.description || 'Без описания' %></p>
+                    
+                    <div class="moderation-meta">
+                        <span class="moderation-author">
+                            <i class="fas fa-user"></i> <%= deck.User.username %>
+                        </span>
+                        <span class="moderation-email">
+                            <i class="fas fa-envelope"></i> <%= deck.User.email %>
+                        </span>
+                        <span class="moderation-date">
+                            <i class="fas fa-calendar"></i> 
+                            <%= new Date(deck.createdAt).toLocaleDateString() %>
+                        </span>
+                        <span class="moderation-cards">
+                            <i class="fas fa-cards"></i> 
+                            <%= deck.Cards ? deck.Cards.length : 0 %> карточек
+                        </span>
+                    </div>
+                    
+                    <div class="moderation-preview">
+                        <a href="/decks/<%= deck.id %>" target="_blank" class="btn btn-outline btn-small">
+                            <i class="fas fa-external-link-alt"></i> Просмотреть колоду
+                        </a>
+                        <button class="btn btn-outline btn-small" onclick="deleteDeck(<%= deck.id %>)">
+                            <i class="fas fa-trash"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } %>
+</div>
+
+<div class="tab-content" id="usersTab" style="display: none;">
+    <h2>Управление пользователями</h2>
+    
+    <div class="search-box">
+        <input type="text" id="userSearch" placeholder="Поиск пользователей..." class="form-control">
+        <button class="btn btn-primary" onclick="searchUsers()">
+            <i class="fas fa-search"></i> Найти
+        </button>
+    </div>
+    
+    <div class="users-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Имя</th>
+                    <th>Email</th>
+                    <th>Роль</th>
+                    <th>Дата регистрации</th>
+                    <th>Колод</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <% users.forEach(user => { %>
+                    <tr id="user-<%= user.id %>">
+                        <td><%= user.id %></td>
+                        <td><%= user.username %></td>
+                        <td><%= user.email %></td>
+                        <td>
+                            <span class="role-badge <%= user.role %> <%= user.id === 1 ? 'main-admin' : '' %>">
+                                <%= user.role === 'admin' ? (user.id === 1 ? 'Главный Админ' : 'Администратор') : 
+                                user.role === 'teacher' ? 'Преподаватель' : 'Студент' %>
+                            </span>
+                        </td>
+                        <td><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                        <td><%= user.DeckCount || 0 %></td>
+                        <td>
+                            <div class="user-actions">
+                            
+                                <div class="dropdown role-dropdown">
+                                    <button class="btn btn-primary btn-small dropdown-toggle" 
+                                            data-user-id="<%= user.id %>"
+                                            data-current-role="<%= user.role %>"
+                                            onclick="toggleRoleDropdown(this)"
+                                            <%= user.id === 1 || user.id === currentUserId ? 'disabled' : '' %>>
+                                        <i class="fas fa-user-cog"></i> Роль
+                                    </button>
+                                    
+                                    <div class="dropdown-menu" id="roleDropdown-<%= user.id %>" style="display: none;">
+                                        <a onclick="changeUserRole(<%= user.id %>, 'student')"
+                                        class="<%= user.role === 'student' ? 'active' : '' %>">
+                                            <i class="fas fa-graduation-cap"></i> Студент
+                                        </a>
+                                        <a onclick="changeUserRole(<%= user.id %>, 'teacher')"
+                                        class="<%= user.role === 'teacher' ? 'active' : '' %>">
+                                            <i class="fas fa-chalkboard-teacher"></i> Преподаватель
+                                        </a>
+                                   
+                                        <% if (user && currentUserId === 1 && user.id !== 1) { %>
+                                            <a onclick="changeUserRole(<%= user.id %>, 'admin')"
+                                            class="<%= user.role === 'admin' ? 'active' : '' %>">
+                                                <i class="fas fa-shield-alt"></i> Администратор
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                              
+                                <button class="btn btn-error btn-small btn-delete" 
+                                        onclick="deleteUser(<%= user.id %>)"
+                                        <%= (user.id === 1 || user.id === currentUserId || 
+                                            (user.role === 'admin' && currentUserId !== 1)) ? 'disabled' : '' %>
+                                        title="<%= user.id === 1 ? 'Нельзя удалить главного администратора' : 
+                                                user.id === currentUserId ? 'Нельзя удалить самого себя' : 
+                                                user.role === 'admin' && currentUserId !== 1 ? 'Только главный администратор может удалять администраторов' : 
+                                                'Удалить пользователя' %>">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tab-content" id="statsTab" style="display: none;">
+    <h2>Статистика платформы</h2>
+    
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="totalUsers"><%= usersCount || 0 %></h3>
+                <p>Всего пользователей</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="totalDecks"><%= decksCount || 0 %></h3>
+                <p>Всего колод</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-cards"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="totalCards"><%= cardsCount || 0 %></h3>
+                <p>Всего карточек</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-globe"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="publicDecks"><%= publicDecksCount || 0 %></h3>
+                <p>Публичных колод</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="recent-activity">
+        <h3>Последняя активность</h3>
+        <div class="activity-list" id="activityList">
+            <div class="activity-item">
+                <i class="fas fa-info-circle"></i>
+                <p>Загрузка данных активности...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+
+
+
+/* Стили для уведомлений */
+.admin-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 300px;
+    max-width: 400px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideInRight 0.3s ease-out;
+    backdrop-filter: blur(10px);
+    border: 2px solid transparent;
+    color: white;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.admin-notification button {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 22px;
+    cursor: pointer;
+    margin-left: 15px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.admin-notification button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.admin-notification button:active {
+    transform: scale(0.95);
+}
+
+/* Типы уведомлений */
+.notification-success {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.95) 0%, rgba(56, 142, 60, 0.95) 100%);
+    border-color: rgba(129, 199, 132, 0.5);
+    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+}
+
+.notification-success::before {
+    content: '✓';
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.notification-error {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.95) 0%, rgba(211, 47, 47, 0.95) 100%);
+    border-color: rgba(239, 154, 154, 0.5);
+    box-shadow: 0 10px 30px rgba(244, 67, 54, 0.3);
+}
+
+.notification-error::before {
+    content: '✗';
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.notification-info {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.95) 0%, rgba(25, 118, 210, 0.95) 100%);
+    border-color: rgba(144, 202, 249, 0.5);
+    box-shadow: 0 10px 30px rgba(33, 150, 243, 0.3);
+}
+
+.notification-info::before {
+    content: 'ℹ';
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.notification-warning {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.95) 0%, rgba(245, 124, 0, 0.95) 100%);
+    border-color: rgba(255, 183, 77, 0.5);
+    box-shadow: 0 10px 30px rgba(255, 152, 0, 0.3);
+}
+
+.notification-warning::before {
+    content: '⚠';
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* Анимации */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.admin-notification.fade-out {
+    animation: fadeOut 0.3s ease-in forwards;
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .admin-notification {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+        min-width: auto;
+        animation: slideInTop 0.3s ease-out;
+    }
+    
+    @keyframes slideInTop {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .admin-notification.fade-out {
+        animation: slideOutTop 0.3s ease-in forwards;
+    }
+    
+    @keyframes slideOutTop {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+    }
+}
+
+
+
+/* Стили для главного администратора */
+.role-badge.main-admin {
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    color: white;
+    border: 2px solid #ce93d8;
+    position: relative;
+}
+
+.role-badge.main-admin::after {
+    content: '★';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 10px;
+    color: #ffd700;
+}
+
+.hide-admin-option {
+    display: none !important;
+}
+
+/* Дополнительные стили для dropdown и кнопок */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.role-dropdown {
+    margin-right: 8px;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background: white;
+    min-width: 180px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border: 2px solid #e3f2fd;
+    border-radius: 8px;
+    z-index: 1000;
+    padding: 8px 0;
+    margin-top: 5px;
+}
+
+.dropdown-menu.show {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    color: #2c3e50;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.dropdown-menu a:hover {
+    background: #e3f2fd;
+    color: #1976D2;
+}
+
+.dropdown-menu a.active {
+    background: #bbdefb;
+    color: #1976D2;
+    font-weight: 600;
+}
+
+.dropdown-menu a i {
+    width: 16px;
+    text-align: center;
+}
+
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dropdown-toggle::after {
+    content: '▼';
+    font-size: 10px;
+    margin-left: 4px;
+}
+
+.btn-delete {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #dc3545;
+    background: #f8d7da;
+    color: #721c24;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-delete:hover:not(:disabled) {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-delete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    border-color: #ddd;
+    color: #999;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-header {
+    background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
+    color: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    box-shadow: 0 15px 35px rgba(13, 71, 161, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 40c24.85 0 45-20.15 45-45S44.85-50 20-50-25-29.85-25-5s20.15 45 45 45zm130 65c24.85 0 45-20.15 45-45S174.85-15 150-15s-45 20.15-45 45 20.15 45 45 45zM-10 165c24.85 0 45-20.15 45-45S14.85 75-10 75s-45 20.15-45 45 20.15 45 45 45z' fill='%2364b5f6' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+    opacity: 0.2;
+}
+
+.admin-header h1 {
+    margin: 0 0 20px 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+}
+
+.admin-stats {
+    display: flex;
+    gap: 25px;
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 25px 30px;
+    text-align: center;
+    min-width: 180px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card h3 {
+    font-size: 3rem;
+    color: white;
+    margin-bottom: 10px;
+    font-weight: 800;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.stat-card p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Стили для кнопок Библиотека и Выход */
+.admin-actions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 15px;
+    z-index: 2;
+}
+
+.admin-actions .btn-outline {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.admin-actions .btn-outline:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: white;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.admin-actions .btn-logout {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.admin-actions .btn-logout:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(220, 53, 69, 0.3);
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+}
+
+.tab-btn {
+    padding: 14px 28px;
+    background: #e3f2fd;
+    border: 2px solid #bbdefb;
+    color: #1976D2;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    background: #bbdefb;
+    border-color: #2196F3;
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border-color: #1976D2;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+}
+
+.tab-content {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+    margin-bottom: 30px;
+}
+
+.tab-content h2 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.tab-content h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.moderation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.moderation-item {
+    border-left: 6px solid #FF9800;
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    border: 2px solid #e3f2fd;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.moderation-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.15);
+    border-color: #bbdefb;
+}
+
+.moderation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.moderation-header h3 {
+    color: #1976D2;
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    flex: 1;
+}
+
+.moderation-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-small {
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    text-decoration: none;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(76, 175, 80, 0.3);
+    background: linear-gradient(135deg, #388E3C 0%, #2E7D32 100%);
+}
+
+.btn-error {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+}
+
+.btn-error:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(244, 67, 54, 0.3);
+    background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+}
+
+.deck-description {
+    color: #546e7a;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.moderation-meta {
+    display: flex;
+    gap: 25px;
+    color: #607d8b;
+    font-size: 14px;
+    margin: 20px 0;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e3f2fd;
+    flex-wrap: wrap;
+}
+
+.moderation-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.moderation-meta i {
+    color: #2196F3;
+    font-size: 14px;
+}
+
+.moderation-preview {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.moderation-preview .btn-outline {
+    background: white;
+    border: 2px solid #bbdefb;
+    color: #1976D2;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.moderation-preview .btn-outline:hover {
+    background: #e3f2fd;
+    border-color: #2196F3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(33, 150, 243, 0.15);
+}
+
+.search-box {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.search-box .form-control {
+    flex: 1;
+    padding: 14px 18px;
+    border: 2px solid #bbdefb;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.search-box .btn-primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.users-table {
+    overflow-x: auto;
+    background: #f8fbff;
+    border-radius: 12px;
+    border: 2px solid #e3f2fd;
+    padding: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+th, td {
+    padding: 18px 15px;
+    text-align: left;
+    border-bottom: 2px solid #e3f2fd;
+}
+
+th {
+    background: #1976D2;
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+td {
+    color: #2c3e50;
+    background: white;
+}
+
+tbody tr:hover {
+    background: #f8fbff;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.role-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.role-badge.admin {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+    border: 2px solid #e57373;
+}
+
+.role-badge.teacher {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border: 2px solid #64b5f6;
+}
+
+.role-badge.student {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+    border: 2px solid #81c784;
+}
+
+.user-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    color: #546e7a;
+    background: #f8fbff;
+    border-radius: 12px;
+    border: 2px dashed #bbdefb;
+}
+
+.empty-state i {
+    color: #bbdefb;
+    margin-bottom: 25px;
+    font-size: 60px;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.stats-cards .stat-card {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+    border-radius: 16px;
+    border: none;
+}
+
+.stat-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.stat-info h3 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    font-weight: 800;
+}
+
+.stat-info p {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.recent-activity {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    border: 2px solid #e3f2fd;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8fbff;
+    border-radius: 8px;
+    border-left: 4px solid #2196F3;
+}
+
+.activity-item i {
+    color: #2196F3;
+    font-size: 20px;
+}
+
+.activity-item p {
+    margin: 0;
+    color: #546e7a;
+}
+
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 30px 20px;
+    }
+    
+    .admin-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .stat-card {
+        width: 100%;
+    }
+    
+    .admin-tabs {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .moderation-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .moderation-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .tab-content {
+        padding: 30px 20px;
+    }
+    
+    .users-table {
+        padding: 15px;
+    }
+    
+    .search-box {
+        flex-direction: column;
+    }
+    
+    .search-box .btn-primary {
+        width: 100%;
+    }
+    
+    /* Адаптация кнопок для мобильных */
+    .admin-actions {
+        position: static;
+        margin-top: 20px;
+        flex-direction: column;
+    }
+    
+    .admin-actions .btn-outline,
+    .admin-actions .btn-logout {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+
+<script>
+
+let currentUserId = <%= user ? user.id : 0 %>;
+console.log('Текущий пользователь ID:', currentUserId);
+
+// Функции для работы с вкладками
+function showTab(tabName) {
+    console.log('Переключение на вкладку:', tabName);
+    
+  
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+  
+    const tabElement = document.getElementById(tabName + 'Tab');
+    if (tabElement) {
+        tabElement.style.display = 'block';
+    }
+    
+   
+    event.target.classList.add('active');
+    
+    // Если открываем вкладку статистики, загружаем данные
+    if (tabName === 'stats') {
+        loadStatistics();
+        loadRecentActivity();
+    }
+}
+
+// Функции для модерации колод
+async function approveDeck(deckId) {
+    if (confirm('Одобрить эту колоду для публикации?')) {
+        try {
+            showNotification('Одобряем колоду...', 'info');
+            
+            const response = await fetch(`/admin/decks/${deckId}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Удаляем элемент из списка
+                const deckElement = document.getElementById(`deck-${deckId}`);
+                if (deckElement) {
+                    deckElement.style.opacity = '0';
+                    deckElement.style.transform = 'translateX(-20px)';
+                    setTimeout(() => {
+                        deckElement.remove();
+                        updatePendingCount();
+                    }, 300);
+                }
+                
+                showNotification('Колода успешно одобрена!', 'success');
+            } else {
+                showNotification(data.error || 'Ошибка при одобрении колоды', 'error');
+            }
+        } catch (error) {
+            console.error('Ошибка при одобрении колоды:', error);
+            showNotification('Ошибка сервера', 'error');
+        }
+    }
+}
+
+async function rejectDeck(deckId) {
+    const reason = prompt('Укажите причину отклонения:');
+    if (reason !== null) {
+        try {
+            showNotification('Отклоняем колоду...', 'info');
+            
+            const response = await fetch(`/admin/decks/${deckId}/reject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ reason: reason })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Удаляем элемент из списка
+                const deckElement = document.getElementById(`deck-${deckId}`);
+                if (deckElement) {
+                    deckElement.style.opacity = '0';
+                    deckElement.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        deckElement.remove();
+                        updatePendingCount();
+                    }, 300);
+                }
+                
+                showNotification('Колода отклонена!', 'success');
+            } else {
+                showNotification(data.error || 'Ошибка при отклонении колоды', 'error');
+            }
+        } catch (error) {
+            console.error('Ошибка при отклонении колоды:', error);
+            showNotification('Ошибка сервера', 'error');
+        }
+    }
+}
+
+async function deleteDeck(deckId) {
+    if (confirm('Вы уверены, что хотите удалить эту колоду? Все карточки внутри также будут удалены.')) {
+        try {
+            showNotification('Удаляем колоду...', 'info');
+            
+            const response = await fetch(`/decks/${deckId}?_method=DELETE`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+            
+            if (response.ok) {
+                // Удаляем элемент из списка
+                const deckElement = document.getElementById(`deck-${deckId}`);
+                if (deckElement) {
+                    deckElement.style.opacity = '0';
+                    deckElement.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        deckElement.remove();
+                        updatePendingCount();
+                    }, 300);
+                }
+                
+                showNotification('Колода успешно удалена!', 'success');
+            } else {
+                showNotification('Ошибка при удалении колоды', 'error');
+            }
+        } catch (error) {
+            console.error('Ошибка при удалении колоды:', error);
+            showNotification('Ошибка сервера', 'error');
+        }
+    }
+}
+
+function searchUsers() {
+    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTableBody tr');
+    
+    rows.forEach(row => {
+        const username = row.cells[1].textContent.toLowerCase();
+        const email = row.cells[2].textContent.toLowerCase();
+        
+        if (username.includes(searchTerm) || email.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Функции для статистики
+async function loadStatistics() {
+    try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('totalUsers').textContent = data.usersCount;
+            document.getElementById('totalDecks').textContent = data.decksCount;
+            document.getElementById('totalCards').textContent = data.cardsCount;
+            document.getElementById('publicDecks').textContent = data.publicDecksCount;
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке статистики:', error);
+    }
+}
+
+async function loadRecentActivity() {
+    try {
+        const response = await fetch('/api/admin/activity');
+        const data = await response.json();
+        
+        const activityList = document.getElementById('activityList');
+        if (data.success && data.activities && data.activities.length > 0) {
+            activityList.innerHTML = '';
+            data.activities.forEach(activity => {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.innerHTML = `
+                    <i class="fas fa-${activity.icon || 'info-circle'}"></i>
+                    <p>${activity.message}</p>
+                    <small>${new Date(activity.timestamp).toLocaleString()}</small>
+                `;
+                activityList.appendChild(activityItem);
+            });
+        } else {
+            activityList.innerHTML = `
+                <div class="activity-item">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Нет данных об активности</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке активности:', error);
+    }
+}
+
+// Вспомогательные функции
+function updatePendingCount() {
+    const pendingItems = document.querySelectorAll('.moderation-item');
+    const statCard = document.querySelector('.admin-stats .stat-card:nth-child(2) h3');
+    if (statCard) {
+        statCard.textContent = pendingItems.length;
+    }
+}
+
+function showNotification(message, type = 'info') {
+    
+    const oldNotifications = document.querySelectorAll('.admin-notification');
+    oldNotifications.forEach(notification => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    });
+    
+    
+    const notification = document.createElement('div');
+    notification.className = `admin-notification notification-${type}`;
+    notification.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    document.querySelector('.admin-header').appendChild(notification);
+    
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Функции для работы с ролями пользователей
+function toggleRoleDropdown(button) {
+    const userId = button.getAttribute('data-user-id');
+    const dropdown = document.getElementById(`roleDropdown-${userId}`);
+    
+    if (!dropdown) {
+        console.error('Dropdown не найден для пользователя:', userId);
+        return;
+    }
+    
+   
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        if (menu.id !== `roleDropdown-${userId}`) {
+            menu.classList.remove('show');
+            menu.style.display = 'none';
+        }
+    });
+    
+    
+    const isVisible = dropdown.classList.contains('show');
+    dropdown.classList.toggle('show');
+    dropdown.style.display = isVisible ? 'none' : 'block';
+    
+    
+    document.addEventListener('click', function closeDropdown(event) {
+        if (!dropdown.contains(event.target) && event.target !== button) {
+            dropdown.classList.remove('show');
+            dropdown.style.display = 'none';
+            document.removeEventListener('click', closeDropdown);
+        }
+    });
+}
+
+// Функция изменения роли пользователя
+async function changeUserRole(userId, newRole) {
+    const currentUserId = <%= user ? user.id : 0 %>;
+    const isCurrentUserMainAdmin = currentUserId === 1;
+    
+    const userRow = document.getElementById(`user-${userId}`);
+    const currentRole = userRow.querySelector('.role-badge').className.includes('admin') ? 'admin' : 
+                       userRow.querySelector('.role-badge').className.includes('teacher') ? 'teacher' : 'student';
+    
+    const roleNames = {
+        'student': 'Студент',
+        'teacher': 'Преподаватель',
+        'admin': 'Администратор'
+    };
+    
+    // Проверка 1: Нельзя менять свою роль
+    if (userId === currentUserId) {
+        return showNotification('Вы не можете изменить свою собственную роль', 'error');
+    }
+    
+    // Проверка 2: Никто не может менять роль главного администратора
+    if (userId === 1) {
+        return showNotification('Роль главного администратора не может быть изменена', 'error');
+    }
+    
+    // Проверка 3: Не главный администратор не может менять роли администраторам
+    if (currentRole === 'admin' && !isCurrentUserMainAdmin) {
+        return showNotification('Только главный администратор может изменять роли администраторов', 'error');
+    }
+    
+    // Проверка 4: Не главный администратор не может назначать администраторов
+    if (newRole === 'admin' && !isCurrentUserMainAdmin) {
+        return showNotification('Только главный администратор может назначать администраторов', 'error');
+    }
+    
+    if (confirm(`Изменить роль пользователя на "${roleNames[newRole]}"?`)) {
+        try {
+            showNotification('Изменяем роль пользователя...', 'info');
+            
+            const response = await fetch(`/admin/users/${userId}/role`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ role: newRole })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Обновляем бейдж
+                const roleBadge = userRow.querySelector('.role-badge');
+                roleBadge.className = `role-badge ${newRole} ${userId === 1 ? 'main-admin' : ''}`;
+                roleBadge.textContent = newRole === 'admin' && userId === 1 ? 'Главный Админ' : roleNames[newRole];
+                
+                showNotification(`Роль пользователя изменена на "${roleNames[newRole]}"`, 'success');
+            } else {
+                showNotification(data.error || 'Ошибка при изменении роли', 'error');
+            }
+        } catch (error) {
+            console.error('Ошибка при изменении роли:', error);
+            showNotification('Ошибка сервера', 'error');
+        }
+    }
+}
+
+// Функция для удаления пользователей
+async function deleteUser(userId) {
+    const currentUserId = <%= user ? user.id : 0 %>;
+    const isCurrentUserMainAdmin = currentUserId === 1;
+    
+    const userRow = document.getElementById(`user-${userId}`);
+    const currentRole = userRow.querySelector('.role-badge').className.includes('admin') ? 'admin' : 
+                       userRow.querySelector('.role-badge').className.includes('teacher') ? 'teacher' : 'student';
+    
+    const username = userRow.cells[1].textContent;
+    
+    
+    if (userId === currentUserId) {
+        return showNotification('Вы не можете удалить самого себя', 'error');
+    }
+    
+    if (userId === 1) {
+        return showNotification('Главный администратор не может быть удален', 'error');
+    }
+    
+    if (currentRole === 'admin' && !isCurrentUserMainAdmin) {
+        return showNotification('Только главный администратор может удалять администраторов', 'error');
+    }
+    
+    const confirmationMessage = 
+        `Вы уверены, что хотите удалить пользователя "${username}"?\n\n` +
+        (currentRole === 'admin' ? '⚠️ ВНИМАНИЕ: Вы удаляете администратора системы!\n' : '') +
+        `ID пользователя: ${userId}\n` +
+        'Все колоды и карточки пользователя также будут удалены.';
+    
+    if (!confirm(confirmationMessage)) {
+        return;
+    }
+    
+    try {
+        showNotification('Удаляем пользователя...', 'info');
+        
+        const response = await fetch(`/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            userRow.remove();
+            showNotification('Пользователь успешно удален', 'success');
+        } else {
+            showNotification(data.error || 'Ошибка при удалении пользователя', 'error');
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении пользователя:', error);
+        showNotification('Ошибка сервера при удалении пользователя', 'error');
+    }
+}
+
+// Новая функция для обновления статистики
+async function updateAdminStats() {
+    try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+        
+        if (data.success) {
+            
+            const statCards = document.querySelectorAll('.stats-cards .stat-card');
+            if (statCards.length >= 4) {
+                statCards[0].querySelector('h3').textContent = data.usersCount || 0;
+                statCards[1].querySelector('h3').textContent = data.decksCount || 0;
+                statCards[2].querySelector('h3').textContent = data.cardsCount || 0;
+                statCards[3].querySelector('h3').textContent = data.publicDecksCount || 0;
+            }
+            
+            
+            const totalUsersElement = document.getElementById('totalUsers');
+            if (totalUsersElement) {
+                totalUsersElement.textContent = data.usersCount || 0;
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении статистики:', error);
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    const currentUserId = <%= user ? user.id : 0 %>;
+    const isCurrentUserMainAdmin = currentUserId === 1;
+    
+   
+    document.querySelectorAll('.dropdown-menu').forEach(dropdown => {
+        const adminOption = dropdown.querySelector('a[onclick*="\'admin\'"]');
+        if (adminOption && !isCurrentUserMainAdmin) {
+            adminOption.classList.add('hide-admin-option');
+        }
+    });
+    
+    
+    if (document.getElementById('statsTab').style.display !== 'none') {
+        loadStatistics();
+        loadRecentActivity();
+    }
+});
+</script>

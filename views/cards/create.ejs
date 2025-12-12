@@ -1,0 +1,314 @@
+<!-- views/cards/create.ejs -->
+<div class="form-container">
+    <h1>Создание карточки</h1>
+    
+    <form action="/cards" method="POST">
+        <div class="form-group">
+            <label class="form-label" for="question">Вопрос:</label>
+            <textarea 
+                class="form-control" 
+                id="question" 
+                name="question" 
+                rows="3" 
+                placeholder="Введите вопрос..." 
+                required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="answer">Ответ:</label>
+            <textarea 
+                class="form-control" 
+                id="answer" 
+                name="answer" 
+                rows="3" 
+                placeholder="Введите ответ..." 
+                required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="deckId">Колода:</label>
+            <select class="form-control" id="deckId" name="deckId" required>
+                <option value="">Выберите колоду</option>
+                <% decks.forEach(deck => { %>
+                    <option value="<%= deck.id %>" 
+                        <%= selectedDeckId && selectedDeckId == deck.id ? 'selected' : '' %>>
+                        <%= deck.name %>
+                    </option>
+                <% }); %>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="tags">Теги (через запятую):</label>
+            <input 
+                type="text" 
+                class="form-control" 
+                id="tags" 
+                name="tags" 
+                placeholder="биология, наука, растения">
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Сохранить карточку
+            </button>
+            <% if (selectedDeckId) { %>
+                <a href="/decks/<%= selectedDeckId %>" class="btn btn-outline">Отмена</a>
+            <% } else { %>
+                <a href="/dashboard" class="btn btn-outline">Отмена</a>
+            <% } %>
+        </div>
+    </form>
+</div>
+
+<style>
+.form-container {
+    max-width: 600px;
+    margin: 30px auto;
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+}
+
+.form-container h1 {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #1976D2;
+    font-size: 28px;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.form-container h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.form-group {
+    margin-bottom: 30px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 12px;
+    color: #1976D2;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid #bbdefb;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: #f8fbff;
+    color: #2c3e50;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    background: white;
+}
+
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%232196F3'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 20px;
+    padding-right: 45px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #e3f2fd;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(33, 150, 243, 0.3);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+}
+
+.btn-outline {
+    background: white;
+    border: 2px solid #bbdefb;
+    color: #1976D2;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.btn-outline:hover {
+    background: #e3f2fd;
+    border-color: #2196F3;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.15);
+}
+
+@media (max-width: 768px) {
+    .form-container {
+        margin: 20px;
+        padding: 30px 25px;
+    }
+    
+    .form-container h1 {
+        font-size: 24px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-primary,
+    .btn-outline {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const deckSelect = document.getElementById('deckId');
+    const selectedDeckId = <%= selectedDeckId ? `'${selectedDeckId}'` : 'null' %>;
+    
+    if (selectedDeckId && deckSelect) {
+        console.log('Автоматически выбираем колоду ID:', selectedDeckId);
+        
+        // Добавляем небольшой timeout для гарантии
+        setTimeout(() => {
+            deckSelect.value = selectedDeckId;
+            
+            // Добавляем визуальное подтверждение
+            const selectedOption = deckSelect.options[deckSelect.selectedIndex];
+            if (selectedOption) {
+                console.log('Выбрана колода:', selectedOption.text);
+                
+                
+                deckSelect.classList.add('selected-deck');
+                
+                
+                const notification = document.createElement('div');
+                notification.className = 'deck-notification';
+                notification.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <span>Автоматически выбрана колода: <strong>${selectedOption.text}</strong></span>
+                `;
+                deckSelect.parentNode.insertBefore(notification, deckSelect.nextSibling);
+                
+                // Убираем уведомление через 3 секунды
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.opacity = '0';
+                        notification.style.transform = 'translateY(-10px)';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.remove();
+                            }
+                        }, 300);
+                    }
+                }, 3000);
+            }
+        }, 100);
+    }
+    
+    // Добавляем стили для уведомления
+    const style = document.createElement('style');
+    style.textContent = `
+        .selected-deck {
+            border-color: #4CAF50 !important;
+            background-color: #f1f8e9 !important;
+        }
+        
+        .deck-notification {
+            margin-top: 10px;
+            padding: 12px 16px;
+            background: #e8f5e9;
+            border: 2px solid #c8e6c9;
+            border-radius: 8px;
+            color: #2e7d32;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .deck-notification i {
+            color: #4CAF50;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Стили для выбранного option */
+        option:checked {
+            background-color: #e3f2fd;
+            color: #1976D2;
+            font-weight: 600;
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>

@@ -1,0 +1,553 @@
+<!-- views/cards/view.ejs -->
+<div class="card-view-container">
+    <div class="card-view-header">
+        <a href="/decks/<%= card.Deck.id %>" class="back-link">
+            <i class="fas fa-arrow-left"></i> Назад к колоде
+        </a>
+        
+        <h1>Просмотр карточки</h1>
+        
+        <% if (user && card.Deck && (user.id === card.Deck.userId || user.role === 'admin')) { %>
+            <div class="card-actions">
+                <a href="/cards/<%= card.id %>/edit" class="btn btn-outline">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+            </div>
+        <% } %>
+    </div>
+    
+    <div class="card-content">
+        <div class="flashcard-view">
+            <div class="flashcard-view-front">
+                <div class="card-section">
+                    <h2><i class="fas fa-question-circle"></i> Вопрос</h2>
+                    <div class="card-text">
+                        <%= card.question %>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flashcard-view-back">
+                <div class="card-section">
+                    <h2><i class="fas fa-check-circle"></i> Ответ</h2>
+                    <div class="card-text">
+                        <%= card.answer %>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="flip-btn" onclick="toggleCard()">
+                <i class="fas fa-sync-alt"></i> Перевернуть карточку
+            </button>
+        </div>
+        
+        <div class="card-info">
+            <div class="info-section">
+                <h3><i class="fas fa-info-circle"></i> Информация</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Колода:</span>
+                        <span class="info-value">
+                            <% if (card.Deck) { %>
+                                <a href="/decks/<%= card.Deck.id %>"><%= card.Deck.name %></a>
+                            <% } else { %>
+                                Неизвестная колода
+                            <% } %>
+                        </span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label">Автор:</span>
+                        <span class="info-value">
+                            <% if (card.Deck && card.Deck.User) { %>
+                                <a href="#"><%= card.Deck.User.username %></a>
+                            <% } else if (card.userId) { %>
+                                ID <%= card.userId %>
+                            <% } else { %>
+                                Неизвестный автор
+                            <% } %>
+                        </span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label">Создана:</span>
+                        <span class="info-value">
+                            <%= new Date(card.createdAt).toLocaleDateString() %>
+                        </span>
+                    </div>
+                    
+                    <% if (card.tags) { %>
+                        <div class="info-item">
+                            <span class="info-label">Теги:</span>
+                            <span class="info-value">
+                                <div class="tags-list">
+                                    <% card.tags.split(',').forEach(tag => { %>
+                                        <span class="tag"><%= tag.trim() %></span>
+                                    <% }); %>
+                                </div>
+                            </span>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card-view-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.card-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding: 25px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.2);
+    position: relative;
+    overflow: hidden;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.card-view-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 40c24.85 0 45-20.15 45-45S44.85-50 20-50-25-29.85-25-5s20.15 45 45 45zm130 65c24.85 0 45-20.15 45-45S174.85-15 150-15s-45 20.15-45 45 20.15 45 45 45zM-10 165c24.85 0 45-20.15 45-45S14.85 75-10 75s-45 20.15-45 45 20.15 45 45 45z' fill='%2364b5f6' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+    opacity: 0.2;
+}
+
+.back-link {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+}
+
+.back-link:hover {
+    background: white;
+    color: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.card-view-header h1 {
+    margin: 0;
+    flex: 1;
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+}
+
+.card-actions {
+    display: flex;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.card-actions .btn-outline {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.card-actions .btn-outline:hover {
+    background: white;
+    color: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.card-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+
+@media (min-width: 992px) {
+    .card-content {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.flashcard-view {
+    background: white;
+    border-radius: 16px;
+    padding: 40px 30px;
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.15);
+    border: 2px solid #e3f2fd;
+    position: relative;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.flashcard-view::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+}
+
+.flashcard-view-front,
+.flashcard-view-back {
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s;
+    backface-visibility: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 40px;
+    left: 30px;
+    right: 30px;
+    bottom: 90px;
+}
+
+.flashcard-view-back {
+    transform: rotateY(180deg);
+    opacity: 0;
+}
+
+.flashcard-view.flipped .flashcard-view-front {
+    transform: rotateY(180deg);
+    opacity: 0;
+}
+
+.flashcard-view.flipped .flashcard-view-back {
+    transform: rotateY(0);
+    opacity: 1;
+}
+
+.card-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-section h2 {
+    color: #1976D2;
+    margin-bottom: 25px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e3f2fd;
+}
+
+.card-text {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.5rem;
+    line-height: 1.8;
+    padding: 30px;
+    border-radius: 12px;
+    background: #f8fbff;
+    border: 3px dashed #bbdefb;
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+.flip-btn {
+    margin-top: 30px;
+    padding: 16px 30px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 60px);
+}
+
+.flip-btn:hover {
+    transform: translateX(-50%) translateY(-3px);
+    box-shadow: 0 10px 25px rgba(33, 150, 243, 0.3);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+}
+
+.card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.info-section, .study-actions {
+    background: white;
+    border-radius: 16px;
+    padding: 35px;
+    box-shadow: 0 10px 30px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+    position: relative;
+    overflow: hidden;
+}
+
+.info-section::before,
+.study-actions::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+}
+
+.info-section h3, .study-actions h3 {
+    margin-bottom: 25px;
+    color: #2c3e50;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e3f2fd;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    color: #546e7a;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    color: #2c3e50;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.info-value a {
+    color: #1976D2;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+.info-value a:hover {
+    color: #2196F3;
+    text-decoration: underline;
+}
+
+.tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.tag {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 2px solid #bbdefb;
+}
+
+.tag::before {
+    content: '#';
+    color: #64b5f6;
+}
+
+.study-actions p {
+    color: #546e7a;
+    margin-bottom: 25px;
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.action-buttons .btn-primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    padding: 16px 32px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+}
+
+.action-buttons .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(33, 150, 243, 0.3);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+}
+
+@media (max-width: 768px) {
+    .card-view-header {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .card-view-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .back-link,
+    .card-actions .btn-outline {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .card-content {
+        gap: 20px;
+    }
+    
+    .flashcard-view {
+        padding: 25px 20px;
+        min-height: 400px;
+    }
+    
+    .card-text {
+        padding: 20px;
+        font-size: 1.2rem;
+    }
+    
+    .info-section,
+    .study-actions {
+        padding: 25px 20px;
+    }
+    
+    .flip-btn {
+        padding: 14px 25px;
+        font-size: 1rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+function toggleCard() {
+    const flashcard = document.querySelector('.flashcard-view');
+    flashcard.classList.toggle('flipped');
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const flashcard = document.querySelector('.flashcard-view');
+    if (flashcard) {
+        let flipped = false;
+        let autoFlipInterval;
+        
+        
+        autoFlipInterval = setInterval(() => {
+            flashcard.classList.toggle('flipped');
+            flipped = !flipped;
+        }, 5000);
+        
+       
+        flashcard.querySelector('.flip-btn').addEventListener('click', function() {
+            clearInterval(autoFlipInterval);
+        });
+        
+        
+        flashcard.addEventListener('mouseenter', function() {
+            clearInterval(autoFlipInterval);
+        });
+        
+       
+        flashcard.addEventListener('mouseleave', function() {
+            autoFlipInterval = setInterval(() => {
+                flashcard.classList.toggle('flipped');
+                flipped = !flipped;
+            }, 5000);
+        });
+    }
+});
+</script>

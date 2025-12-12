@@ -1,0 +1,1077 @@
+<!-- views/dashboard.ejs -->
+<div class="dashboard-header">
+    <h1>Личный кабинет</h1>
+    <p>Добро пожаловать, <%= user.username %>! <span class="user-role">(<%= user.role === 'admin' ? 'Администратор' : user.role === 'teacher' ? 'Преподаватель' : 'Студент' %>)</span></p>
+    
+   <div class="dashboard-actions">
+        <a href="/decks/create" class="action-btn unified-action">
+            <div class="action-content-centered">
+                <h3>Новая колода</h3>
+                <p>Создайте коллекцию карточек</p>
+            </div>
+            <div class="action-glow"></div>
+            <div class="action-shine"></div>
+            <div class="action-wave"></div>
+        </a>
+        
+        <a href="/cards/create" class="action-btn unified-action">
+            <div class="action-content-centered">
+                <h3>Новая карточка</h3>
+                <p>Добавьте вопрос и ответ</p>
+            </div>
+            <div class="action-glow"></div>
+            <div class="action-shine"></div>
+            <div class="action-wave"></div>
+        </a>
+        
+        <a href="/library" class="action-btn unified-action">
+            <div class="action-content-centered">
+                <h3>Библиотека</h3>
+                <p>Исследуйте публичные коллекции</p>
+            </div>
+            <div class="action-glow"></div>
+            <div class="action-shine"></div>
+            <div class="action-wave"></div>
+        </a>
+    </div>
+    
+    <div class="dashboard-logout">
+        <a href="/logout" class="btn btn-logout">
+            <i class="fas fa-sign-out-alt"></i> Выход
+        </a>
+    </div>
+</div>
+
+<div class="dashboard-stats">
+    <div class="stat-card">
+        <h3><%= userDecks.length %></h3>
+        <p>Мои колоды</p>
+    </div>
+    <div class="stat-card">
+        <h3><%= userDecks.reduce((total, deck) => total + (deck.Cards ? deck.Cards.length : 0), 0) %></h3>
+        <p>Мои карточки</p>
+    </div>
+    <div class="stat-card">
+        <h3><%= publicDecks.length %></h3>
+        <p>Публичных колод</p>
+    </div>
+    <div class="stat-card">
+        <h3 id="studiedToday">0</h3>
+        <p>Изучено сегодня</p>
+    </div>
+</div>
+
+<div class="my-decks">
+    <h2>Мои колоды</h2>
+    
+    <% if (userDecks.length === 0) { %>
+        <div class="empty-state">
+            <i class="fas fa-inbox fa-3x"></i>
+            <h3>У вас пока нет колод</h3>
+            <p>Создайте свою первую колоду для начала обучения</p>
+            <a href="/decks/create" class="btn btn-primary">Создать колоду</a>
+        </div>
+    <% } else { %>
+        <div class="row">
+            <% userDecks.forEach(deck => { %>
+                <div class="card deck-card">
+                    <div class="deck-header">
+                        <h3><%= deck.name %></h3>
+                        <span class="deck-status <%= deck.status %>">
+                            <%= deck.status === 'draft' ? 'Черновик' : 
+                               deck.status === 'pending' ? 'На модерации' : 
+                               deck.status === 'approved' ? 'Одобрено' : 'Отклонено' %>
+                        </span>
+                    </div>
+                    
+                    <p class="deck-description"><%= deck.description || 'Без описания' %></p>
+                    
+                    <div class="deck-meta">
+                        <span class="deck-cards">
+                            <i class="fas fa-cards"></i> 
+                            <%= deck.Cards ? deck.Cards.length : 0 %> карточек
+                        </span>
+                        
+                        <span class="deck-visibility">
+                            <% if (deck.isPublic) { %>
+                                <i class="fas fa-globe"></i> Публичная
+                            <% } else { %>
+                                <i class="fas fa-lock"></i> Приватная
+                            <% } %>
+                        </span>
+                    </div>
+                    
+                    <div class="deck-actions">
+                        <a href="/decks/<%= deck.id %>/study/swipe" class="deck-action-library primary">
+                            <i class="fas fa-play"></i> Учить
+                        </a>
+                        <a href="/decks/<%= deck.id %>/study/speed" class="deck-action-library primary">
+                            <i class="fas fa-bolt"></i> Скоростной режим
+                        </a>
+                        <a href="/decks/<%= deck.id %>" class="deck-action-library primary">
+                            <i class="fas fa-eye"></i> Просмотр
+                        </a>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } %>
+</div>
+
+<% if (publicDecks && publicDecks.length > 0) { %>
+<div class="public-decks">
+    <h2>Публичные колоды для изучения</h2>
+    
+    <div class="row">
+        <% publicDecks.forEach(deck => { %>
+            <div class="card deck-card public-deck">
+                <div class="deck-header">
+                    <h3><%= deck.name %></h3>
+                    <span class="deck-badge">
+                        <i class="fas fa-users"></i> Публичная
+                    </span>
+                </div>
+                
+                <p class="deck-description"><%= deck.description || 'Без описания' %></p>
+                
+                <div class="deck-meta">
+                    <span class="deck-author">
+                        <i class="fas fa-user"></i> <%= deck.User ? deck.User.username : 'Неизвестный автор' %>
+                    </span>
+                    
+                    <span class="deck-cards">
+                        <i class="fas fa-cards"></i> 
+                        <%= deck.Cards ? deck.Cards.length : 0 %> карточек
+                    </span>
+                </div>
+                
+                <div class="deck-actions">
+                    <% if (deck.isPublic && deck.status === 'approved') { %>
+                        <a href="/decks/<%= deck.id %>/study/swipe" class="deck-action-library primary">
+                            <i class="fas fa-play"></i> Учить
+                        </a>
+                        <a href="/decks/<%= deck.id %>/study/speed" class="deck-action-library primary">
+                            <i class="fas fa-bolt"></i> Скоростной режим
+                        </a>
+                        <a href="/decks/<%= deck.id %>" class="deck-action-library primary">
+                            <i class="fas fa-eye"></i> Просмотр
+                        </a>
+                    <% } else { %>
+                        <span class="btn btn-outline btn-small disabled">
+                            <i class="fas fa-clock"></i> На модерации
+                        </span>
+                    <% } %>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+</div>
+<% } %>
+
+
+
+<script>
+// Функция для загрузки статистики изучения
+async function loadStudyStats() {
+  try {
+    const response = await fetch('/api/dashboard/stats', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'same-origin'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Обновляем статистику изученных карточек сегодня
+      const studiedTodayElement = document.getElementById('studiedToday');
+      if (studiedTodayElement) {
+        studiedTodayElement.textContent = data.studiedToday || 0;
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка при загрузке статистики:', error);
+    const studiedTodayElement = document.getElementById('studiedToday');
+    if (studiedTodayElement) {
+      studiedTodayElement.textContent = '—';
+    }
+  }
+}
+
+// Загружаем статистику при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadStudyStats();
+    
+    const statsElements = document.querySelectorAll('.stat-card h3');
+    statsElements.forEach(element => {
+        const originalValue = element.textContent;
+        element.textContent = '0';
+        
+        // Анимация счетчика
+        let startValue = 0;
+        const endValue = parseInt(originalValue);
+        const duration = 1500; 
+        const increment = endValue / (duration / 16); 
+        
+        const timer = setInterval(() => {
+            startValue += increment;
+            if (startValue >= endValue) {
+                clearInterval(timer);
+                element.textContent = originalValue;
+            } else {
+                element.textContent = Math.floor(startValue);
+            }
+        }, 16);
+    });
+});
+</script>
+
+<style>
+.dashboard-header {
+    background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%);
+    color: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(33, 150, 243, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 40c24.85 0 45-20.15 45-45S44.85-50 20-50-25-29.85-25-5s20.15 45 45 45zm130 65c24.85 0 45-20.15 45-45S174.85-15 150-15s-45 20.15-45 45 20.15 45 45 45zM-10 165c24.85 0 45-20.15 45-45S14.85 75-10 75s-45 20.15-45 45 20.15 45 45 45z' fill='%2364b5f6' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+    opacity: 0.2;
+}
+
+.dashboard-header h1 {
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+}
+
+.dashboard-header p {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    position: relative;
+    z-index: 1;
+}
+
+.user-role {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    margin-left: 10px;
+    font-weight: 600;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.dashboard-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+    padding: 10px;
+    align-items: stretch; 
+}
+
+.action-btn {
+    background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%);
+    border-radius: 16px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    height: 160px;
+    width: 100%; 
+    min-height: 160px; 
+}
+
+
+.unified-action {
+    flex: 1 0 auto;
+}
+
+
+.action-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.12), 
+        rgba(255, 255, 255, 0.05), 
+        rgba(255, 255, 255, 0.12));
+    border-radius: 16px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 1;
+}
+
+.action-btn:hover .action-glow {
+    opacity: 1;
+}
+
+
+.action-shine {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0) 60%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    transition: all 0.6s ease;
+    opacity: 0;
+    z-index: 1;
+}
+
+.action-btn:hover .action-shine {
+    opacity: 1;
+    transform: rotate(30deg) translate(20%, 20%);
+}
+
+
+.action-wave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        transparent 70%);
+    border-radius: 16px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.6s ease;
+    z-index: 1;
+}
+
+.action-btn:hover .action-wave {
+    opacity: 1;
+    transform: scale(1.5);
+}
+
+
+.action-content-centered {
+    position: relative;
+    z-index: 2;
+    padding: 20px;
+    width: 100%;
+    max-width: 250px;
+}
+
+.action-content-centered h3 {
+    color: white;
+    font-size: 1.6rem;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+}
+
+.action-content-centered p {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.4;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    font-weight: 400;
+}
+
+
+.action-btn:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 18px 35px rgba(33, 150, 243, 0.3);
+    background: linear-gradient(135deg, #0D47A1 0%, #1565C0 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.07), 
+        rgba(255, 255, 255, 0.03));
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.1),
+                inset 0 -1px 4px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 1;
+}
+
+.action-btn:hover::before {
+    opacity: 1;
+}
+
+
+@keyframes pulse-border {
+    0%, 100% {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    50% {
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+.action-btn {
+    animation: pulse-border 3s infinite;
+}
+
+
+.action-btn:active {
+    transform: translateY(-3px) scale(0.98);
+    transition: transform 0.1s ease;
+}
+
+.action-btn:active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 0.25) 0%, 
+        transparent 70%);
+    opacity: 0;
+    animation: click-ripple 0.6s ease-out;
+    z-index: 1;
+}
+
+@keyframes click-ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+
+.action-content-centered {
+    transition: transform 0.3s ease;
+}
+
+.action-btn:hover .action-content-centered {
+    transform: translateY(-2px);
+}
+
+
+.action-btn::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.3), 
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.3));
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.action-btn:hover::after {
+    opacity: 1;
+}
+
+
+.action-btn {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.action-btn:nth-child(1) { animation-delay: 0.1s; }
+.action-btn:nth-child(2) { animation-delay: 0.2s; }
+.action-btn:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+@media (max-width: 992px) {
+    .dashboard-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-actions {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 0;
+    }
+    
+    .action-btn {
+        height: 140px;
+        min-height: 140px;
+    }
+    
+    .action-content-centered h3 {
+        font-size: 1.4rem;
+    }
+    
+    .action-content-centered p {
+        font-size: 0.9rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .dashboard-actions {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .action-btn {
+        height: 160px;
+        min-height: 160px;
+    }
+}
+
+
+.action-btn {
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+}
+
+.dashboard-actions .action-btn {
+    flex: 1;
+    min-width: 280px;
+    max-width: 100%;
+}
+
+.action-btn {
+    box-shadow: 
+        0 8px 20px rgba(33, 150, 243, 0.2),
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.action-btn:hover {
+    box-shadow: 
+        0 15px 30px rgba(33, 150, 243, 0.3),
+        0 4px 8px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.action-btn .corner-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+}
+
+.action-btn .corner-dot:nth-child(1) { top: 12px; left: 12px; }
+.action-btn .corner-dot:nth-child(2) { top: 12px; right: 12px; }
+.action-btn .corner-dot:nth-child(3) { bottom: 12px; left: 12px; }
+.action-btn .corner-dot:nth-child(4) { bottom: 12px; right: 12px; }
+
+
+.dashboard-actions {
+    opacity: 0;
+    animation: fadeIn 0.8s ease 0.2s forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+.dashboard-logout {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 2;
+}
+
+.btn-logout {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.btn-logout:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(220, 53, 69, 0.3);
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px 20px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.15);
+    border-color: #bbdefb;
+}
+
+.stat-card h3 {
+    font-size: 2.8rem;
+    color: #1976D2;
+    margin-bottom: 10px;
+    font-weight: 800;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.stat-card p {
+    color: #546e7a;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.my-decks {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+    margin-top: 40px;
+}
+
+.my-decks h2 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.my-decks h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.public-decks {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.1);
+    border: 2px solid #e3f2fd;
+    margin-top: 40px;
+}
+
+.public-decks h2 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.public-decks h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #2196F3 0%, #64b5f6 100%);
+    border-radius: 2px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    color: #546e7a;
+    background: #f8fbff;
+    border-radius: 12px;
+    border: 2px dashed #bbdefb;
+}
+
+.empty-state i {
+    color: #bbdefb;
+    margin-bottom: 25px;
+    font-size: 60px;
+}
+
+.empty-state h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.empty-state p {
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.empty-state .btn-primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.empty-state .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(33, 150, 243, 0.3);
+}
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.deck-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    border: 2px solid #e3f2fd;
+    transition: all 0.3s ease;
+}
+
+.deck-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(33, 150, 243, 0.15);
+    border-color: #bbdefb;
+}
+
+.public-deck {
+    border-left: 6px solid #4CAF50;
+}
+
+.deck-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.deck-header h3 {
+    color: #1976D2;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.deck-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+    border: 2px solid transparent;
+}
+
+.deck-status.draft {
+    background-color: #fff3cd;
+    color: #856404;
+    border-color: #ffeaa7;
+}
+
+.deck-status.pending {
+    background-color: #ffecb3;
+    color: #856404;
+    border-color: #ffd54f;
+}
+
+.deck-status.approved {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.deck-status.rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.deck-description {
+    color: #546e7a;
+    margin-bottom: 20px;
+    flex: 1;
+    line-height: 1.6;
+    min-height: 60px;
+}
+
+.deck-meta {
+    display: flex;
+    justify-content: space-between;
+    color: #607d8b;
+    font-size: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e3f2fd;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.deck-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.deck-meta i {
+    color: #2196F3;
+    font-size: 14px;
+}
+
+.deck-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    flex-wrap: wrap;
+}
+
+.deck-actions .btn-small {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.deck-actions .btn-primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border: none;
+}
+
+.deck-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(33, 150, 243, 0.3);
+}
+
+.deck-actions .btn-outline {
+    background: white;
+    border: 2px solid #bbdefb;
+    color: #1976D2;
+}
+
+.deck-actions .btn-outline:hover {
+    background: #e3f2fd;
+    border-color: #2196F3;
+    transform: translateY(-2px);
+}
+
+.deck-badge {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 2px solid #81c784;
+}
+
+.btn-small.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    color: #9e9e9e;
+    border-color: #e0e0e0;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 30px 20px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+        padding-right: 120px; 
+    }
+    
+    .dashboard-actions {
+        flex-direction: column;
+    }
+    
+    .dashboard-actions .btn-primary,
+    .dashboard-actions .btn-outline {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .row {
+        grid-template-columns: 1fr;
+    }
+    
+    .my-decks,
+    .public-decks {
+        padding: 30px 20px;
+    }
+    
+    .deck-actions {
+        flex-direction: column;
+    }
+    
+    .deck-actions .btn-small {
+        width: 100%;
+    }
+    
+    .dashboard-logout {
+        top: 15px;
+        right: 15px;
+    }
+    
+    .btn-logout {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    
+    .btn-logout i {
+        font-size: 14px;
+    }
+}
+
+
+.deck-action-library {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
+    min-height: 36px;
+}
+
+.deck-action-library.primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border-color: #1976D2;
+}
+
+.deck-action-library.primary:hover {
+    background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
+    border-color: #0D47A1;
+}
+</style>

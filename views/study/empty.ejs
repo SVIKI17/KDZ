@@ -1,0 +1,62 @@
+<!-- views/study/empty.ejs -->
+<div class="empty-study-container">
+    <div class="empty-study-content">
+        <i class="fas fa-inbox fa-4x"></i>
+        <h1>Нет карточек для обучения</h1>
+        <p><%= message || 'В этой колоде пока нет карточек для обучения' %></p>
+        
+        <div class="empty-study-actions">
+            <a href="/decks/<%= deck.id %>" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Вернуться к колоде
+            </a>
+            
+            <% if (user && user.id === deck.userId) { %>
+                <a href="/cards/create?deckId=<%= deck.id %>" class="btn btn-outline">
+                    <i class="fas fa-plus"></i> Добавить карточку
+                </a>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<style>
+.empty-study-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 20px;
+}
+
+.empty-study-content {
+    text-align: center;
+    max-width: 500px;
+    padding: 40px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.empty-study-content i {
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+.empty-study-content h1 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.empty-study-content p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.empty-study-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+</style>
